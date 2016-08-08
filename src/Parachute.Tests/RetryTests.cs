@@ -7,14 +7,14 @@ namespace Parachute.Tests
 {
 	public class RetryTests
 	{
-		private readonly Action<RetryConfigurationExpression> _config;
+		private readonly RetryConfigurationExpression _config;
 
 		public RetryTests()
 		{
-			_config = config =>
+			_config = new RetryConfigurationExpression
 			{
-				config.Delay = TimeSpan.FromSeconds(5);
-				config.MaxRetries = 5;
+				Delay = TimeSpan.FromSeconds(5),
+				MaxRetries = 5
 			};
 		}
 
@@ -69,8 +69,8 @@ namespace Parachute.Tests
 			Retry.Run(action, () => config);
 			Retry.Run(action, c =>
 			{
-				c.Delay = TimeSpan.FromSeconds(1);
-				c.MaxRetries = 5;
+				c.Delay = _config.Delay;
+				c.MaxRetries = _config.MaxRetries;
 			});
 		}
 	}
