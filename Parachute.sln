@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Parachute", "src\Parachute\Parachute.xproj", "{22C93E57-B031-4CC9-BAF3-310E866D53B2}"
 EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Parachute.Tests", "src\Parachute.Tests\Parachute.Tests.xproj", "{7AC16312-F29F-4A98-8894-D91AD115AB7F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,11 +24,16 @@ Global
 		{22C93E57-B031-4CC9-BAF3-310E866D53B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{22C93E57-B031-4CC9-BAF3-310E866D53B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{22C93E57-B031-4CC9-BAF3-310E866D53B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7AC16312-F29F-4A98-8894-D91AD115AB7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7AC16312-F29F-4A98-8894-D91AD115AB7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7AC16312-F29F-4A98-8894-D91AD115AB7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7AC16312-F29F-4A98-8894-D91AD115AB7F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{22C93E57-B031-4CC9-BAF3-310E866D53B2} = {52A0E2C4-63DF-4BEE-9EF0-24948ED82B51}
+		{7AC16312-F29F-4A98-8894-D91AD115AB7F} = {52A0E2C4-63DF-4BEE-9EF0-24948ED82B51}
 	EndGlobalSection
 EndGlobal
