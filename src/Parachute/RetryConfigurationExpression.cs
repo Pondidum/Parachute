@@ -1,10 +1,16 @@
-﻿using System;
+﻿using Parachute.Policies;
 
 namespace Parachute
 {
 	public class RetryConfigurationExpression
 	{
-		public TimeSpan Delay { get; set; }
 		public int MaxRetries { get; set; }
+		public IPolicy Policy { get; set; }
+
+		public RetryConfigurationExpression()
+		{
+			MaxRetries = 5;
+			Policy = new InstantPolicy();
+		}
 	}
 }

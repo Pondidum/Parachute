@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 namespace Parachute
 {
@@ -19,9 +20,9 @@ namespace Parachute
 
 		public static void Run(Action action, RetryConfigurationExpression config)
 		{
-			var retries = 0;
+			var attempt = 0;
 
-			while (retries < config.MaxRetries)
+			while (attempt < config.MaxRetries)
 			{
 				try
 				{
@@ -30,10 +31,12 @@ namespace Parachute
 				}
 				catch (Exception)
 				{
-					retries++;
+					attempt++;
 
-					if (retries >= config.MaxRetries)
+					if (attempt >= config.MaxRetries)
 						throw;
+
+					Thread.Sleep(config.Policy.GetDelay(attempt));
 				}
 			}
 		}

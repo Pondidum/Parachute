@@ -2,6 +2,7 @@
 using Shouldly;
 using Xunit;
 using Parachute;
+using Parachute.Policies;
 
 namespace Parachute.Tests
 {
@@ -13,7 +14,6 @@ namespace Parachute.Tests
 		{
 			_config = new RetryConfigurationExpression
 			{
-				Delay = TimeSpan.FromSeconds(5),
 				MaxRetries = 5
 			};
 		}
@@ -69,7 +69,6 @@ namespace Parachute.Tests
 			Retry.Run(action, () => config);
 			Retry.Run(action, c =>
 			{
-				c.Delay = _config.Delay;
 				c.MaxRetries = _config.MaxRetries;
 			});
 		}
