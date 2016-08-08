@@ -1,6 +1,7 @@
 ﻿using System;
 using Shouldly;
 using Xunit;
+using Parachute;
 
 namespace Parachute.Tests
 {
@@ -56,6 +57,21 @@ namespace Parachute.Tests
 
 			Retry.Run(action, _config);
 			attempts.ShouldBe(2);
+		}
+
+		[Fact]
+		public void It_can_be_configured_in_multiple_ways()
+		{
+			Action action = () => { };
+			var config = new RetryConfigurationExpression();
+
+			Retry.Run(action, config);
+			Retry.Run(action, () => config);
+			Retry.Run(action, c =>
+			{
+				c.Delay = TimeSpan.FromSeconds(1);
+				c.MaxRetries = 5;
+			});
 		}
 	}
 }
