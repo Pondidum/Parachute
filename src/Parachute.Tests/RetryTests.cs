@@ -1,8 +1,6 @@
 ﻿using System;
 using Shouldly;
 using Xunit;
-using Parachute;
-using Parachute.Policies;
 
 namespace Parachute.Tests
 {
@@ -71,6 +69,52 @@ namespace Parachute.Tests
 			{
 				c.MaxRetries = _config.MaxRetries;
 			});
+		}
+
+		[Fact]
+		public void When_creating_a_promise_config_is_created_instantly()
+		{
+			var actionRan = false;
+
+			Action action = () => actionRan = true;
+
+			var promise = Retry.Create(action, _config);
+
+			actionRan.ShouldBe(false);
+		}
+
+		[Fact]
+		public void When_creating_a_promise_config_is_created_instantly_for_action_config()
+		{
+			var configRan = false;
+			var actionRan = false;
+
+			Action<RetryConfigurationExpression> configure = config => configRan = true;
+			Action action = () => actionRan = true;
+
+			var promise = Retry.Create(action, configure);
+
+			configRan.ShouldBe(true);
+			actionRan.ShouldBe(false);
+		}
+
+		[Fact]
+		public void When_creating_a_promise_config_is_created_instantly_for_func_config()
+		{
+			var configRan = false;
+			var actionRan = false;
+
+			Func<RetryConfigurationExpression> configure = () =>
+			{
+				configRan = true;
+				return _config;
+			};
+			Action action = () => actionRan = true;
+
+			var promise = Retry.Create(action, configure);
+
+			configRan.ShouldBe(true);
+			actionRan.ShouldBe(false);
 		}
 	}
 }

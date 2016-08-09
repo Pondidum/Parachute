@@ -7,7 +7,7 @@
   * [ ] serilog directly?
   * [ ] perhaps common.logging
 * [x] Retries
-  * [ ] promises/deferred
+  * [x] promises/deferred
   * [ ] optional context object
   * [x] exponential backoff
   * [x] customisable policies
