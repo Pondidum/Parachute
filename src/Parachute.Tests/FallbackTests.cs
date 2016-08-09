@@ -83,5 +83,97 @@ namespace Parachute.Tests
 
 			first.ShouldBe(true);
 		}
+
+		[Fact]
+		public void For_contextual_when_no_actions_are_supplied()
+		{
+			var context = new Context { Name = "first" };
+			Should.NotThrow(() => Fallback.Run(context));
+		}
+
+		[Fact]
+		public void For_contextual_when_the_first_works()
+		{
+			var context = new Context { Name = "first" };
+			var first = "";
+			var second = "";
+			var third = "";
+
+			Fallback.Run(
+				context,
+				cx => { first = cx.Name; },
+				cx => { second = cx.Name; },
+				cx => { third = cx.Name; }
+			);
+
+			first.ShouldBe(context.Name);
+			second.ShouldBe("");
+			third.ShouldBe("");
+		}
+
+		[Fact]
+		public void For_contextual_when_the_second_works()
+		{
+			var context = new Context { Name = "first" };
+			var first = "";
+			var second = "";
+			var third = "";
+
+			Fallback.Run(
+				context,
+				cx => { throw new NotSupportedException(); },
+				cx => { second = cx.Name; },
+				cx => { third = cx.Name; }
+			);
+
+			first.ShouldBe("");
+			second.ShouldBe(context.Name);
+			third.ShouldBe("");
+		}
+
+		[Fact]
+		public void For_contextual_when_none_work()
+		{
+			var context = new Context { Name = "first" };
+			var first = "";
+			var second = "";
+			var third = "";
+
+			Should.Throw<NotSupportedException>(() =>
+				Fallback.Run(
+					context,
+					cx => { throw new NotSupportedException(); },
+					cx => { throw new NotSupportedException(); },
+					cx => { throw new NotSupportedException(); }
+				)
+			);
+
+			first.ShouldBe("");
+			second.ShouldBe("");
+			third.ShouldBe("");
+		}
+
+		[Fact]
+		public void For_contextual_when_creating_a_promise_version()
+		{
+			var first = "";
+
+			var promise = Fallback.Create<Context>(
+				cx => { first = cx.Name; }
+			);
+
+			first.ShouldBe("");
+
+			promise(new Context { Name = "A"});
+			first.ShouldBe("A");
+
+			promise(new Context { Name = "B" });
+			first.ShouldBe("B");
+		}
+
+		private class Context
+		{
+			public string Name { get; set; }
+		}
 	}
 }

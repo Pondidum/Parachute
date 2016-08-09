@@ -10,6 +10,8 @@
   * [x] exponential backoff
   * [x] customisable policies
 * [x] Fallbacks
+  * [x] promises/deferred
+  * [x] optional context object
   * [ ] chainable
   * [ ] policies - when something fails, do x
   * [ ] graphs? e.g. do x if exception 1, do y if exception 2
