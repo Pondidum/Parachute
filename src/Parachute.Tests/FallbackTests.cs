@@ -7,6 +7,12 @@ namespace Parachute.Tests
 	public class FallbackTests
 	{
 		[Fact]
+		public void When_no_actions_are_supplied()
+		{
+			Should.NotThrow(() => Fallback.Run());
+		}
+
+		[Fact]
 		public void When_the_first_works()
 		{
 			var first = false;
@@ -60,6 +66,22 @@ namespace Parachute.Tests
 			first.ShouldBe(false);
 			second.ShouldBe(false);
 			third.ShouldBe(false);
+		}
+
+		[Fact]
+		public void When_creating_a_promise_version()
+		{
+			var first = false;
+
+			var promise = Fallback.Create(
+				() => { first = true; }
+			);
+
+			first.ShouldBe(false);
+
+			promise();
+
+			first.ShouldBe(true);
 		}
 	}
 }

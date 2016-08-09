@@ -21,5 +21,10 @@ namespace Parachute
 				}
 			}
 		}
+
+		public static Action Create(params Action[] actions)
+		{
+			return () => Run(actions);
+		}
 	}
 }
