@@ -222,6 +222,21 @@ namespace Parachute.Tests
 			actionRan.ShouldBe(false);
 		}
 
+		[Fact]
+		public void For_contextual_when_creating_a_promise_version()
+		{
+			var result = "";
+			var promise = Retry.Create<Context>(cx => result = cx.Name, _config);
+
+			result.ShouldBe("");
+
+			promise(new Context { Name = "A" });
+			result.ShouldBe("A");
+
+			promise(new Context { Name = "B" });
+			result.ShouldBe("B");
+		}
+
 		private class Context
 		{
 			public string Name { get; set; }
