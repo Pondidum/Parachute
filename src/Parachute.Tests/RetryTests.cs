@@ -6,11 +6,11 @@ namespace Parachute.Tests
 {
 	public class RetryTests
 	{
-		private readonly RetryConfigurationExpression _config;
+		private readonly RetryConfiguration _config;
 
 		public RetryTests()
 		{
-			_config = new RetryConfigurationExpression
+			_config = new RetryConfiguration
 			{
 				MaxRetries = 5
 			};
@@ -61,7 +61,7 @@ namespace Parachute.Tests
 		public void It_can_be_configured_in_multiple_ways()
 		{
 			Action action = () => { };
-			var config = new RetryConfigurationExpression();
+			var config = new RetryConfiguration();
 
 			Retry.Run(action, config);
 			Retry.Run(action, () => config);
@@ -89,7 +89,7 @@ namespace Parachute.Tests
 			var configRan = false;
 			var actionRan = false;
 
-			Action<RetryConfigurationExpression> configure = config => configRan = true;
+			Action<RetryConfiguration> configure = config => configRan = true;
 			Action action = () => actionRan = true;
 
 			var promise = Retry.Create(action, configure);
@@ -104,7 +104,7 @@ namespace Parachute.Tests
 			var configRan = false;
 			var actionRan = false;
 
-			Func<RetryConfigurationExpression> configure = () =>
+			Func<RetryConfiguration> configure = () =>
 			{
 				configRan = true;
 				return _config;
@@ -166,7 +166,7 @@ namespace Parachute.Tests
 		{
 			var context = new Context();
 			Action<Context> action = cx => { };
-			var config = new RetryConfigurationExpression();
+			var config = new RetryConfiguration();
 
 			Retry.Run(context, action, config);
 			Retry.Run(context, action, () => config);
@@ -194,7 +194,7 @@ namespace Parachute.Tests
 			var configRan = false;
 			var actionRan = false;
 
-			Action<RetryConfigurationExpression> configure = config => configRan = true;
+			Action<RetryConfiguration> configure = config => configRan = true;
 			Action<Context> action = cx => actionRan = true;
 
 			var promise = Retry.Create(action, configure);
@@ -209,7 +209,7 @@ namespace Parachute.Tests
 			var configRan = false;
 			var actionRan = false;
 
-			Func<RetryConfigurationExpression> configure = () =>
+			Func<RetryConfiguration> configure = () =>
 			{
 				configRan = true;
 				return _config;

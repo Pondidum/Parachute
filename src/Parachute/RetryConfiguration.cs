@@ -2,12 +2,12 @@
 
 namespace Parachute
 {
-	public class RetryConfigurationExpression
+	public class RetryConfiguration
 	{
 		public int MaxRetries { get; set; }
 		public IPolicy Policy { get; set; }
 
-		public RetryConfigurationExpression()
+		public RetryConfiguration()
 		{
 			MaxRetries = 5;
 			Policy = new InstantPolicy();
