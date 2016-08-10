@@ -9,11 +9,22 @@ namespace Parachute.Tests
 		private readonly Action _passAction;
 		private readonly Action _failAction;
 		private readonly CircuitBreakerConfig _config;
+		private string _result;
 
 		public CircuitBreakerTests()
 		{
-			_passAction = () => { };
-			_failAction = () => { throw new NotSupportedException(); };
+			_result = "";
+
+			_passAction = () =>
+			{
+				_result = "PASS";
+			};
+
+			_failAction = () =>
+			{
+				_result = "FAIL";
+				throw new NotSupportedException();
+			};
 
 			_config = new CircuitBreakerConfig
 			{
@@ -24,8 +35,10 @@ namespace Parachute.Tests
 		[Fact]
 		public void When_in_closed_and_action_succeeds()
 		{
-			CircuitBreaker.Create(_passAction, _config)();
+			var promise = CircuitBreaker.Create(_passAction, _config);
+			promise();
 
+			_result.ShouldBe("PASS");
 			_config.CurrentState.ShouldBe(CircuitBreakerStates.Closed);
 		}
 
@@ -37,41 +50,47 @@ namespace Parachute.Tests
 
 			promise();
 
+			_result.ShouldBe("PASS");
 			_config.CurrentState.ShouldBe(CircuitBreakerStates.Closed);
 		}
 
 		[Fact]
-		public void When_in_closed_and_aciton_fails_more_than_threashold()
+		public void When_in_closed_and_action_fails_more_than_threashold()
 		{
 			_config.Threashold = 0;
 			var promise = CircuitBreaker.Create(_failAction, _config);
 
 			promise();
 
+			_result.ShouldBe("FAIL");
 			_config.CurrentState.ShouldBe(CircuitBreakerStates.Open);
 		}
 
 		[Fact]
 		public void When_in_open_and_timeout_has_not_elapsed()
 		{
-			_config.TimeoutCheckInterval = TimeSpan.Zero;
 			_config.HasTimeoutExpired = elapsed => false;
+			_config.InitialState = CircuitBreakerStates.Open;
+
 			var promise = CircuitBreaker.Create(_passAction, _config);
 
 			Should.Throw<CircuitOpenException>(() => promise());
 
+			_result.ShouldBe("");
 			_config.CurrentState.ShouldBe(CircuitBreakerStates.Open);
 		}
 
 		[Fact]
 		public void When_in_open_and_timeout_elapses()
 		{
-			_config.TimeoutCheckInterval = TimeSpan.Zero;
 			_config.HasTimeoutExpired = elapsed => true;
+			_config.InitialState = CircuitBreakerStates.Open;
+
 			var promise = CircuitBreaker.Create(_passAction, _config);
 
 			promise();
 
+			_result.ShouldBe("PASS");
 			_config.CurrentState.ShouldBe(CircuitBreakerStates.PartiallyOpen);
 		}
 
@@ -83,6 +102,7 @@ namespace Parachute.Tests
 
 			promise();
 
+			_result.ShouldBe("PASS");
 			_config.CurrentState.ShouldBe(CircuitBreakerStates.Closed);
 		}
 
@@ -94,6 +114,7 @@ namespace Parachute.Tests
 
 			Should.Throw<NotSupportedException>(() => promise());
 
+			_result.ShouldBe("FAIL");
 			_config.CurrentState.ShouldBe(CircuitBreakerStates.Open);
 		}
 	}
