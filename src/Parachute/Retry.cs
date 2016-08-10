@@ -59,5 +59,60 @@ namespace Parachute
 				}
 			}
 		}
+
+		public static Action<TContext> Create<TContext>(Action<TContext> action, Func<RetryConfigurationExpression> configure)
+		{
+			var config = configure();
+			return context => Run(context, action, config);
+		}
+
+		public static Action<TContext> Create<TContext>(Action<TContext> action, Action<RetryConfigurationExpression> configure)
+		{
+			var config = new RetryConfigurationExpression();
+			configure(config);
+
+			return context => Run(context, action, config);
+		}
+
+		public static Action<TContext> Create<TContext>(Action<TContext> action, RetryConfigurationExpression config)
+		{
+			return context => Run(context, action, config);
+		}
+
+		public static void Run<TContext>(TContext context, Action<TContext> action, Func<RetryConfigurationExpression> configure)
+		{
+			Run(context, action, configure());
+		}
+
+		public static void Run<TContext>(TContext context, Action<TContext> action, Action<RetryConfigurationExpression> configure)
+		{
+			var config = new RetryConfigurationExpression();
+			configure(config);
+
+			Run(context, action, config);
+		}
+
+		public static void Run<TContext>(TContext context, Action<TContext> action, RetryConfigurationExpression config)
+		{
+			var attempt = 0;
+
+			while (attempt < config.MaxRetries)
+			{
+				try
+				{
+					action(context);
+					return;
+				}
+				catch (Exception)
+				{
+					attempt++;
+
+					if (attempt >= config.MaxRetries)
+						throw;
+
+					Thread.Sleep(config.Policy.GetDelay(attempt));
+				}
+			}
+		}
 	}
 }
