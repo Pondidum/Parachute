@@ -30,19 +30,14 @@ namespace Parachute
 			_errorStamps = new List<DateTime>();
 		}
 
-		private bool IsTripped()
+		public void Invoke()
 		{
 			var elapsed = _errorStamps.Any() ? DateTime.UtcNow.Subtract(_errorStamps.Last()) : TimeSpan.Zero;
 
 			if (_state.Current == CircuitBreakerStates.Open && _config.HasTimeoutExpired(elapsed))
 				_state.AttemptReset();
 
-			return _state.Current == CircuitBreakerStates.Open;
-		}
-
-		public void Invoke()
-		{
-			if (IsTripped())
+			if (_state.Current == CircuitBreakerStates.Open)
 				throw new CircuitOpenException();
 
 			try
