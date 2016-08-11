@@ -45,58 +45,27 @@ namespace Parachute
 			if (IsTripped())
 				throw new CircuitOpenException();
 
-			if (_state.Current == CircuitBreakerStates.Closed)
+			try
 			{
-				try
-				{
-					_action();
-				}
-				catch (Exception)
-				{
-					_errorStamps.Add(DateTime.UtcNow);
+				_action();
 
-					var threasholdStamp = DateTime.UtcNow.Subtract(_config.ThreasholdWindow);
-					var errorsInWindow = _errorStamps.Count(stamp => stamp > threasholdStamp);
+				if (_state.Current == CircuitBreakerStates.Closed)
+					_errorStamps.Clear();
 
-					if (errorsInWindow > _config.Threashold)
-						_state.Trip();
-
-					throw;
-				}
-			}
-			//else if (_state.Current == CircuitBreakerStates.Open)
-			//{
-			//	if (_config.HasTimeoutExpired(elapsed))
-			//	{
-			//		try
-			//		{
-			//			_action();
-			//			_state.AttemptReset();
-			//		}
-			//		catch (Exception)
-			//		{
-			//			_errorStamps.Add(DateTime.UtcNow);
-			//			throw;
-			//		}
-			//	}
-			//	else
-			//	{
-			//		throw new CircuitOpenException();
-			//	}
-			//}
-			else if (_state.Current == CircuitBreakerStates.PartiallyOpen)
-			{
-				try
-				{
-					_action();
+				if (_state.Current == CircuitBreakerStates.PartiallyOpen)
 					_state.Reset();
-				}
-				catch (Exception)
-				{
-					_errorStamps.Add(DateTime.UtcNow);
+			}
+			catch (Exception)
+			{
+				_errorStamps.Add(DateTime.UtcNow);
+
+				var threasholdStamp = DateTime.UtcNow.Subtract(_config.ThreasholdWindow);
+				var errorsInWindow = _errorStamps.Count(stamp => stamp > threasholdStamp);
+
+				if (errorsInWindow > _config.Threashold || _state.Current == CircuitBreakerStates.PartiallyOpen)
 					_state.Trip();
-					throw;
-				}
+
+				throw;
 			}
 		}
 
