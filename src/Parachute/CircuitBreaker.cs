@@ -10,8 +10,9 @@ namespace Parachute
 		[Pure]
 		public static Action Create(Action action, CircuitBreakerConfig config)
 		{
-			config.CurrentState = config.InitialState;
-			DateTime? lastError = null;
+			var state = new CircuitState(config.InitialState);
+			config.ReadState = () => state.Current;
+
 			var errorStamps = new List<DateTime>();
 
 			return () =>
@@ -26,31 +27,30 @@ namespace Parachute
 					catch (Exception)
 					{
 						errorStamps.Add(DateTime.UtcNow);
-						lastError = DateTime.UtcNow;
 
 						var threasholdStamp = DateTime.UtcNow.Subtract(config.ThreasholdWindow);
 						var errorsInWindow = errorStamps.Count(stamp => stamp > threasholdStamp);
 
 						if (errorsInWindow > config.Threashold)
-							config.CurrentState = CircuitBreakerStates.Open;
+							state.Trip();
 
 						throw;
 					}
 				}
 				else if (config.CurrentState == CircuitBreakerStates.Open)
 				{
-					var elapsed = lastError.HasValue ? DateTime.UtcNow.Subtract(lastError.Value) : TimeSpan.Zero;
+					var elapsed = errorStamps.Any() ? DateTime.UtcNow.Subtract(errorStamps.Last()) : TimeSpan.Zero;
 
 					if (config.HasTimeoutExpired(elapsed))
 					{
 						try
 						{
 							action();
-							config.CurrentState = CircuitBreakerStates.PartiallyOpen;
+							state.AttemptReset();
 						}
 						catch (Exception)
 						{
-							lastError = DateTime.UtcNow;
+							errorStamps.Add(DateTime.UtcNow);
 							throw;
 						}
 					}
@@ -64,23 +64,56 @@ namespace Parachute
 					try
 					{
 						action();
-						config.CurrentState = CircuitBreakerStates.Closed;
+						state.Reset();
 					}
 					catch (Exception)
 					{
-						lastError = DateTime.UtcNow;
-						config.CurrentState = CircuitBreakerStates.Open;
+						errorStamps.Add(DateTime.UtcNow);
+						state.Trip();
 						throw;
 					}
 				}
 			};
 		}
+
+		private class CircuitState
+		{
+			private CircuitBreakerStates _currentState;
+
+			public CircuitState(CircuitBreakerStates initialState)
+			{
+				_currentState = initialState;
+			}
+
+			public CircuitBreakerStates Current => _currentState;
+
+			public void Trip()
+			{
+				if (_currentState == CircuitBreakerStates.Closed || _currentState == CircuitBreakerStates.PartiallyOpen)
+					_currentState = CircuitBreakerStates.Open;
+			}
+
+			public void AttemptReset()
+			{
+				if (_currentState == CircuitBreakerStates.Open)
+					_currentState = CircuitBreakerStates.PartiallyOpen;
+			}
+
+			public void Reset()
+			{
+				if (_currentState == CircuitBreakerStates.Open || _currentState == CircuitBreakerStates.PartiallyOpen)
+					_currentState = CircuitBreakerStates.Closed;
+			}
+		}
+
 	}
 
 	public class CircuitBreakerConfig
 	{
+		internal Func<CircuitBreakerStates> ReadState { get; set; }
+		public CircuitBreakerStates CurrentState => ReadState();
+
 		public CircuitBreakerStates InitialState { get; set; }
-		public CircuitBreakerStates CurrentState { get; internal set; }
 		public int Threashold { get; set; }
 		public Func<TimeSpan, bool> HasTimeoutExpired { get; set; }
 		public TimeSpan ThreasholdWindow { get; set; }
