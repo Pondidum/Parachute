@@ -29,7 +29,6 @@ namespace Parachute.Tests
 			_config = new CircuitBreakerConfig
 			{
 				InitialState = CircuitBreakerStates.Closed,
-				ThreasholdWindow = TimeSpan.FromSeconds(10)
 			};
 		}
 
