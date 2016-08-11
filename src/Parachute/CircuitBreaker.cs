@@ -10,58 +10,44 @@ namespace Parachute
 		[Pure]
 		public static Action Create(Action action, CircuitBreakerConfig config)
 		{
-			var cb = new CircuitBreaker(action, config);
+			var state = new CircuitState(config.InitialState);
+			config.ReadState = () => state.Current;
 
-			return cb.Invoke;
-		}
+			var errorStamps = new List<DateTime>();
 
-		private readonly CircuitState _state;
-		private readonly List<DateTime> _errorStamps;
-		private readonly Action _action;
-		private readonly CircuitBreakerConfig _config;
-
-		private CircuitBreaker(Action action, CircuitBreakerConfig config)
-		{
-			_action = action;
-			_config = config;
-			_state = new CircuitState(config.InitialState);
-			config.ReadState = () => _state.Current;
-
-			_errorStamps = new List<DateTime>();
-		}
-
-		public void Invoke()
-		{
-			var elapsed = _errorStamps.Any() ? DateTime.UtcNow.Subtract(_errorStamps.Last()) : TimeSpan.Zero;
-
-			if (_state.Current == CircuitBreakerStates.Open && _config.HasTimeoutExpired(elapsed))
-				_state.AttemptReset();
-
-			if (_state.Current == CircuitBreakerStates.Open)
-				throw new CircuitOpenException();
-
-			try
+			return () =>
 			{
-				_action();
+				var elapsed = errorStamps.Any() ? DateTime.UtcNow.Subtract(errorStamps.Last()) : TimeSpan.Zero;
 
-				if (_state.Current == CircuitBreakerStates.Closed)
-					_errorStamps.Clear();
+				if (state.Current == CircuitBreakerStates.Open && config.HasTimeoutExpired(elapsed))
+					state.AttemptReset();
 
-				if (_state.Current == CircuitBreakerStates.PartiallyOpen)
-					_state.Reset();
-			}
-			catch (Exception)
-			{
-				_errorStamps.Add(DateTime.UtcNow);
+				if (state.Current == CircuitBreakerStates.Open)
+					throw new CircuitOpenException();
 
-				var threasholdStamp = DateTime.UtcNow.Subtract(_config.ThreasholdWindow);
-				var errorsInWindow = _errorStamps.Count(stamp => stamp > threasholdStamp);
+				try
+				{
+					action();
 
-				if (errorsInWindow > _config.Threashold || _state.Current == CircuitBreakerStates.PartiallyOpen)
-					_state.Trip();
+					if (state.Current == CircuitBreakerStates.Closed)
+						errorStamps.Clear();
 
-				throw;
-			}
+					if (state.Current == CircuitBreakerStates.PartiallyOpen)
+						state.Reset();
+				}
+				catch (Exception)
+				{
+					errorStamps.Add(DateTime.UtcNow);
+
+					var threasholdStamp = DateTime.UtcNow.Subtract(config.ThreasholdWindow);
+					var errorsInWindow = errorStamps.Count(stamp => stamp > threasholdStamp);
+
+					if (errorsInWindow > config.Threashold || state.Current == CircuitBreakerStates.PartiallyOpen)
+						state.Trip();
+
+					throw;
+				}
+			};
 		}
 
 
