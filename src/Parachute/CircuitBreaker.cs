@@ -10,71 +10,85 @@ namespace Parachute
 		[Pure]
 		public static Action Create(Action action, CircuitBreakerConfig config)
 		{
-			var state = new CircuitState(config.InitialState);
-			config.ReadState = () => state.Current;
+			var cb = new CircuitBreaker(action, config);
 
-			var errorStamps = new List<DateTime>();
-
-			return () =>
-			{
-
-				if (config.CurrentState == CircuitBreakerStates.Closed)
-				{
-					try
-					{
-						action();
-					}
-					catch (Exception)
-					{
-						errorStamps.Add(DateTime.UtcNow);
-
-						var threasholdStamp = DateTime.UtcNow.Subtract(config.ThreasholdWindow);
-						var errorsInWindow = errorStamps.Count(stamp => stamp > threasholdStamp);
-
-						if (errorsInWindow > config.Threashold)
-							state.Trip();
-
-						throw;
-					}
-				}
-				else if (config.CurrentState == CircuitBreakerStates.Open)
-				{
-					var elapsed = errorStamps.Any() ? DateTime.UtcNow.Subtract(errorStamps.Last()) : TimeSpan.Zero;
-
-					if (config.HasTimeoutExpired(elapsed))
-					{
-						try
-						{
-							action();
-							state.AttemptReset();
-						}
-						catch (Exception)
-						{
-							errorStamps.Add(DateTime.UtcNow);
-							throw;
-						}
-					}
-					else
-					{
-						throw new CircuitOpenException();
-					}
-				}
-				else if (config.CurrentState == CircuitBreakerStates.PartiallyOpen)
-				{
-					try
-					{
-						action();
-						state.Reset();
-					}
-					catch (Exception)
-					{
-						errorStamps.Add(DateTime.UtcNow);
-						state.Trip();
-						throw;
-					}
-				}
-			};
+			return cb.Invoke;
 		}
+
+		private readonly CircuitState _state;
+		private readonly List<DateTime> _errorStamps;
+		private readonly Action _action;
+		private readonly CircuitBreakerConfig _config;
+
+		private CircuitBreaker(Action action, CircuitBreakerConfig config)
+		{
+			_action = action;
+			_config = config;
+			_state = new CircuitState(config.InitialState);
+			config.ReadState = () => _state.Current;
+
+			_errorStamps = new List<DateTime>();
+		}
+
+		public void Invoke()
+		{
+			if (_state.Current == CircuitBreakerStates.Closed)
+			{
+				try
+				{
+					_action();
+				}
+				catch (Exception)
+				{
+					_errorStamps.Add(DateTime.UtcNow);
+
+					var threasholdStamp = DateTime.UtcNow.Subtract(_config.ThreasholdWindow);
+					var errorsInWindow = _errorStamps.Count(stamp => stamp > threasholdStamp);
+
+					if (errorsInWindow > _config.Threashold)
+						_state.Trip();
+
+					throw;
+				}
+			}
+			else if (_state.Current == CircuitBreakerStates.Open)
+			{
+				var elapsed = _errorStamps.Any() ? DateTime.UtcNow.Subtract(_errorStamps.Last()) : TimeSpan.Zero;
+
+				if (_config.HasTimeoutExpired(elapsed))
+				{
+					try
+					{
+						_action();
+						_state.AttemptReset();
+					}
+					catch (Exception)
+					{
+						_errorStamps.Add(DateTime.UtcNow);
+						throw;
+					}
+				}
+				else
+				{
+					throw new CircuitOpenException();
+				}
+			}
+			else if (_state.Current == CircuitBreakerStates.PartiallyOpen)
+			{
+				try
+				{
+					_action();
+					_state.Reset();
+				}
+				catch (Exception)
+				{
+					_errorStamps.Add(DateTime.UtcNow);
+					_state.Trip();
+					throw;
+				}
+			}
+		}
+
 
 		private class CircuitState
 		{
