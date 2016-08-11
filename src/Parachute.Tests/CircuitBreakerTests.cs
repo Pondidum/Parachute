@@ -91,7 +91,7 @@ namespace Parachute.Tests
 			promise();
 
 			_result.ShouldBe("PASS");
-			_config.CurrentState.ShouldBe(CircuitBreakerStates.PartiallyOpen);
+			_config.CurrentState.ShouldBe(CircuitBreakerStates.Closed);
 		}
 
 		[Fact]

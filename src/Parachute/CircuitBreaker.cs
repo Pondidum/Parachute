@@ -30,8 +30,21 @@ namespace Parachute
 			_errorStamps = new List<DateTime>();
 		}
 
+		private bool IsTripped()
+		{
+			var elapsed = _errorStamps.Any() ? DateTime.UtcNow.Subtract(_errorStamps.Last()) : TimeSpan.Zero;
+
+			if (_state.Current == CircuitBreakerStates.Open && _config.HasTimeoutExpired(elapsed))
+				_state.AttemptReset();
+
+			return _state.Current == CircuitBreakerStates.Open;
+		}
+
 		public void Invoke()
 		{
+			if (IsTripped())
+				throw new CircuitOpenException();
+
 			if (_state.Current == CircuitBreakerStates.Closed)
 			{
 				try
@@ -51,28 +64,26 @@ namespace Parachute
 					throw;
 				}
 			}
-			else if (_state.Current == CircuitBreakerStates.Open)
-			{
-				var elapsed = _errorStamps.Any() ? DateTime.UtcNow.Subtract(_errorStamps.Last()) : TimeSpan.Zero;
-
-				if (_config.HasTimeoutExpired(elapsed))
-				{
-					try
-					{
-						_action();
-						_state.AttemptReset();
-					}
-					catch (Exception)
-					{
-						_errorStamps.Add(DateTime.UtcNow);
-						throw;
-					}
-				}
-				else
-				{
-					throw new CircuitOpenException();
-				}
-			}
+			//else if (_state.Current == CircuitBreakerStates.Open)
+			//{
+			//	if (_config.HasTimeoutExpired(elapsed))
+			//	{
+			//		try
+			//		{
+			//			_action();
+			//			_state.AttemptReset();
+			//		}
+			//		catch (Exception)
+			//		{
+			//			_errorStamps.Add(DateTime.UtcNow);
+			//			throw;
+			//		}
+			//	}
+			//	else
+			//	{
+			//		throw new CircuitOpenException();
+			//	}
+			//}
 			else if (_state.Current == CircuitBreakerStates.PartiallyOpen)
 			{
 				try
