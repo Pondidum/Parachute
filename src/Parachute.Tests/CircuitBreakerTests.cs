@@ -29,6 +29,7 @@ namespace Parachute.Tests
 			_config = new CircuitBreakerConfig
 			{
 				InitialState = CircuitBreakerStates.Closed,
+				ThreasholdWindow = TimeSpan.FromSeconds(10)
 			};
 		}
 
@@ -46,11 +47,11 @@ namespace Parachute.Tests
 		public void When_in_closed_and_action_fails_less_than_threashold()
 		{
 			_config.Threashold = 5;
-			var promise = CircuitBreaker.Create(_passAction, _config);
+			var promise = CircuitBreaker.Create(_failAction, _config);
 
-			promise();
+			Should.Throw<NotSupportedException>(() => promise());
 
-			_result.ShouldBe("PASS");
+			_result.ShouldBe("FAIL");
 			_config.CurrentState.ShouldBe(CircuitBreakerStates.Closed);
 		}
 
@@ -60,7 +61,7 @@ namespace Parachute.Tests
 			_config.Threashold = 0;
 			var promise = CircuitBreaker.Create(_failAction, _config);
 
-			promise();
+			Should.Throw<NotSupportedException>(() => promise());
 
 			_result.ShouldBe("FAIL");
 			_config.CurrentState.ShouldBe(CircuitBreakerStates.Open);
