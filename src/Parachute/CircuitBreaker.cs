@@ -10,8 +10,7 @@ namespace Parachute
 		[Pure]
 		public static Action Create(Action action, CircuitBreakerConfig config)
 		{
-			var state = new CircuitState(config.InitialState);
-			config.ReadState = () => state.Current;
+			var state = new CircuitState();
 
 			var errorStamps = new List<DateTime>();
 
@@ -56,7 +55,7 @@ namespace Parachute
 		{
 			private CircuitBreakerStates _currentState;
 
-			public CircuitState(CircuitBreakerStates initialState)
+			public CircuitState(CircuitBreakerStates initialState = CircuitBreakerStates.Closed)
 			{
 				_currentState = initialState;
 			}
@@ -86,10 +85,6 @@ namespace Parachute
 
 	public class CircuitBreakerConfig
 	{
-		internal Func<CircuitBreakerStates> ReadState { get; set; }
-		public CircuitBreakerStates CurrentState => ReadState();
-		public CircuitBreakerStates InitialState { get; set; }
-
 		/// <summary>The number of Exceptions needed to trip the breaker</summary>
 		public int ExceptionThreashold { get; set; }
 
