@@ -43,7 +43,7 @@ namespace Parachute
 					var threasholdStamp = now.Subtract(config.ThreasholdWindow);
 					var errorsInWindow = errorStamps.Count(stamp => stamp > threasholdStamp);
 
-					if (errorsInWindow > config.Threashold || state.Current == CircuitBreakerStates.PartiallyOpen)
+					if (errorsInWindow >= config.Threashold || state.Current == CircuitBreakerStates.PartiallyOpen)
 						state.Trip();
 
 					throw;
