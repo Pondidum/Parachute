@@ -17,7 +17,8 @@ namespace Parachute
 
 			return () =>
 			{
-				var elapsed = errorStamps.Any() ? DateTime.UtcNow.Subtract(errorStamps.Last()) : TimeSpan.Zero;
+				var now = config.GetTimestamp();
+				var elapsed = errorStamps.Any() ? now.Subtract(errorStamps.Last()) : TimeSpan.Zero;
 
 				if (state.Current == CircuitBreakerStates.Open && config.HasTimeoutExpired(elapsed))
 					state.AttemptReset();
@@ -37,9 +38,9 @@ namespace Parachute
 				}
 				catch (Exception)
 				{
-					errorStamps.Add(DateTime.UtcNow);
+					errorStamps.Add(now);
 
-					var threasholdStamp = DateTime.UtcNow.Subtract(config.ThreasholdWindow);
+					var threasholdStamp = now.Subtract(config.ThreasholdWindow);
 					var errorsInWindow = errorStamps.Count(stamp => stamp > threasholdStamp);
 
 					if (errorsInWindow > config.Threashold || state.Current == CircuitBreakerStates.PartiallyOpen)
@@ -87,17 +88,19 @@ namespace Parachute
 	{
 		internal Func<CircuitBreakerStates> ReadState { get; set; }
 		public CircuitBreakerStates CurrentState => ReadState();
-
 		public CircuitBreakerStates InitialState { get; set; }
+
 		public int Threashold { get; set; }
 		public Func<TimeSpan, bool> HasTimeoutExpired { get; set; }
 		public TimeSpan ThreasholdWindow { get; set; }
+		public Func<DateTime> GetTimestamp { get; set; }
 
 		public CircuitBreakerConfig()
 		{
 			var timeout = TimeSpan.FromSeconds(5);
 			HasTimeoutExpired = span => span > timeout;
 
+			GetTimestamp = () => DateTime.UtcNow;
 			ThreasholdWindow = TimeSpan.FromSeconds(2);
 		}
 	}
