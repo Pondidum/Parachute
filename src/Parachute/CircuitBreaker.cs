@@ -19,20 +19,20 @@ namespace Parachute
 				var now = config.GetTimestamp();
 				var elapsed = errorStamps.Any() ? now.Subtract(errorStamps.Last()) : TimeSpan.Zero;
 
-				if (state.Current == CircuitBreakerStates.Open && elapsed > config.ResetTimeout)
+				if (state.IsOpen && elapsed > config.ResetTimeout)
 					state.AttemptReset();
 
-				if (state.Current == CircuitBreakerStates.Open)
+				if (state.IsOpen)
 					throw new CircuitOpenException();
 
 				try
 				{
 					action();
 
-					if (state.Current == CircuitBreakerStates.Closed)
+					if (state.IsClosed)
 						errorStamps.Clear();
 
-					if (state.Current == CircuitBreakerStates.PartiallyOpen)
+					if (state.IsPartial)
 						state.Reset();
 				}
 				catch (Exception)
@@ -42,7 +42,7 @@ namespace Parachute
 					var threasholdStamp = now.Subtract(config.ExceptionTimeout);
 					var errorsInWindow = errorStamps.Count(stamp => stamp > threasholdStamp);
 
-					if (errorsInWindow >= config.ExceptionThreashold || state.Current == CircuitBreakerStates.PartiallyOpen)
+					if (errorsInWindow >= config.ExceptionThreashold || state.IsPartial)
 						state.Trip();
 
 					throw;
@@ -50,17 +50,18 @@ namespace Parachute
 			};
 		}
 
-
 		private class CircuitState
 		{
 			private CircuitBreakerStates _currentState;
 
-			public CircuitState(CircuitBreakerStates initialState = CircuitBreakerStates.Closed)
+			public CircuitState()
 			{
-				_currentState = initialState;
+				_currentState = CircuitBreakerStates.Closed;
 			}
 
-			public CircuitBreakerStates Current => _currentState;
+			public bool IsOpen => _currentState == CircuitBreakerStates.Open;
+			public bool IsClosed => _currentState == CircuitBreakerStates.Closed;
+			public bool IsPartial => _currentState == CircuitBreakerStates.PartiallyOpen;
 
 			public void Trip()
 			{
@@ -78,6 +79,13 @@ namespace Parachute
 			{
 				if (_currentState == CircuitBreakerStates.Open || _currentState == CircuitBreakerStates.PartiallyOpen)
 					_currentState = CircuitBreakerStates.Closed;
+			}
+
+			private enum CircuitBreakerStates
+			{
+				Closed,
+				PartiallyOpen,
+				Open
 			}
 		}
 
