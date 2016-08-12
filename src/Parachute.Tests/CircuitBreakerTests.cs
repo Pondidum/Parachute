@@ -45,7 +45,7 @@ namespace Parachute.Tests
 		[Fact]
 		public void When_in_closed_and_action_fails_less_than_threashold()
 		{
-			_config.Threashold = 5;
+			_config.ExceptionThreashold = 5;
 			var promise = CircuitBreaker.Create(_failAction, _config);
 
 			Should.Throw<NotSupportedException>(() => promise());
@@ -57,7 +57,7 @@ namespace Parachute.Tests
 		[Fact]
 		public void When_in_closed_and_action_fails_more_than_threashold()
 		{
-			_config.Threashold = 0;
+			_config.ExceptionThreashold = 0;
 			var promise = CircuitBreaker.Create(_failAction, _config);
 
 			Should.Throw<NotSupportedException>(() => promise());
@@ -129,8 +129,8 @@ namespace Parachute.Tests
 			_promise = CircuitBreaker.Create(controllableAction, new CircuitBreakerConfig
 			{
 				GetTimestamp = () => _timestamp,
-				Threashold = 1,
-				ThreasholdWindow = TimeSpan.FromSeconds(5)
+				ExceptionThreashold = 1,
+				ExceptionTimeout = TimeSpan.FromSeconds(5)
 			});
 		}
 

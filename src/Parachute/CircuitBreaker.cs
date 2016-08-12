@@ -20,7 +20,7 @@ namespace Parachute
 				var now = config.GetTimestamp();
 				var elapsed = errorStamps.Any() ? now.Subtract(errorStamps.Last()) : TimeSpan.Zero;
 
-				if (state.Current == CircuitBreakerStates.Open && elapsed > config.Timeout)
+				if (state.Current == CircuitBreakerStates.Open && elapsed > config.ResetTimeout)
 					state.AttemptReset();
 
 				if (state.Current == CircuitBreakerStates.Open)
@@ -40,10 +40,10 @@ namespace Parachute
 				{
 					errorStamps.Add(now);
 
-					var threasholdStamp = now.Subtract(config.ThreasholdWindow);
+					var threasholdStamp = now.Subtract(config.ExceptionTimeout);
 					var errorsInWindow = errorStamps.Count(stamp => stamp > threasholdStamp);
 
-					if (errorsInWindow >= config.Threashold || state.Current == CircuitBreakerStates.PartiallyOpen)
+					if (errorsInWindow >= config.ExceptionThreashold || state.Current == CircuitBreakerStates.PartiallyOpen)
 						state.Trip();
 
 					throw;
@@ -90,18 +90,22 @@ namespace Parachute
 		public CircuitBreakerStates CurrentState => ReadState();
 		public CircuitBreakerStates InitialState { get; set; }
 
-		public int Threashold { get; set; }
-		public TimeSpan ThreasholdWindow { get; set; }
+		/// <summary>The number of Exceptions needed to trip the breaker</summary>
+		public int ExceptionThreashold { get; set; }
 
-		public TimeSpan Timeout { get; set; }
+		/// <summary> The window in which the number of <see cref="ExceptionThreashold"/> must occur in</summary>
+		public TimeSpan ExceptionTimeout { get; set; }
+
+		/// <summary>The amount of time after tripping before attempting to reset the breaker</summary>
+		public TimeSpan ResetTimeout { get; set; }
 		public Func<DateTime> GetTimestamp { get; set; }
 
 		public CircuitBreakerConfig()
 		{
-			Timeout = TimeSpan.FromSeconds(5);
+			ResetTimeout = TimeSpan.FromSeconds(5);
 
 			GetTimestamp = () => DateTime.UtcNow;
-			ThreasholdWindow = TimeSpan.FromSeconds(2);
+			ExceptionTimeout = TimeSpan.FromSeconds(2);
 		}
 	}
 
