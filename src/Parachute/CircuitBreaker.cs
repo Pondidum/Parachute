@@ -20,7 +20,7 @@ namespace Parachute
 				var now = config.GetTimestamp();
 				var elapsed = errorStamps.Any() ? now.Subtract(errorStamps.Last()) : TimeSpan.Zero;
 
-				if (state.Current == CircuitBreakerStates.Open && config.HasTimeoutExpired(elapsed))
+				if (state.Current == CircuitBreakerStates.Open && elapsed > config.Timeout)
 					state.AttemptReset();
 
 				if (state.Current == CircuitBreakerStates.Open)
@@ -91,14 +91,14 @@ namespace Parachute
 		public CircuitBreakerStates InitialState { get; set; }
 
 		public int Threashold { get; set; }
-		public Func<TimeSpan, bool> HasTimeoutExpired { get; set; }
 		public TimeSpan ThreasholdWindow { get; set; }
+
+		public TimeSpan Timeout { get; set; }
 		public Func<DateTime> GetTimestamp { get; set; }
 
 		public CircuitBreakerConfig()
 		{
-			var timeout = TimeSpan.FromSeconds(5);
-			HasTimeoutExpired = span => span > timeout;
+			Timeout = TimeSpan.FromSeconds(5);
 
 			GetTimestamp = () => DateTime.UtcNow;
 			ThreasholdWindow = TimeSpan.FromSeconds(2);

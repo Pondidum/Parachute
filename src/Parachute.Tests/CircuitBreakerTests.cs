@@ -69,7 +69,7 @@ namespace Parachute.Tests
 		[Fact]
 		public void When_in_open_and_timeout_has_not_elapsed()
 		{
-			_config.HasTimeoutExpired = elapsed => false;
+			//_config.HasTimeoutExpired = elapsed => false;
 			_config.InitialState = CircuitBreakerStates.Open;
 
 			var promise = CircuitBreaker.Create(_passAction, _config);
@@ -78,20 +78,6 @@ namespace Parachute.Tests
 
 			_result.ShouldBe("");
 			_config.CurrentState.ShouldBe(CircuitBreakerStates.Open);
-		}
-
-		[Fact]
-		public void When_in_open_and_timeout_elapses()
-		{
-			_config.HasTimeoutExpired = elapsed => true;
-			_config.InitialState = CircuitBreakerStates.Open;
-
-			var promise = CircuitBreaker.Create(_passAction, _config);
-
-			promise();
-
-			_result.ShouldBe("PASS");
-			_config.CurrentState.ShouldBe(CircuitBreakerStates.Closed);
 		}
 
 		[Fact]
