@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Shouldly;
 using Xunit;
 
@@ -32,62 +34,93 @@ namespace Parachute.Tests
 			});
 		}
 
-		private void Next(int offset) => _timestamp = InitialStamp.AddSeconds(offset);
-
-		private void SuccessfulCall(int offset)
+		[Fact]
+		public void Invoke()
 		{
-			Next(offset);
+			Execute(new Dictionary<int, Action>
+			{
+				[0] = ShouldPass,
+				[1] = ShouldFail,
+				[2] = ShouldFailButCircuitBroken,
+				[7] = ShouldFail,
+				[8] = ShouldPassButCircuitBroken
+			});
+		}
 
-			_succeeds = true;
+		[Fact]
+		public void When_a_call_succeeds()
+		{
+			Execute(new Dictionary<int, Action>
+			{
+				[0] = ShouldPass
+			});
+		}
+
+		[Fact]
+		public void When_the_cb_trips_timesout_and_then_succeeds()
+		{
+			Execute(new Dictionary<int, Action>
+			{
+				[0] = ShouldFail,
+				[1] = ShouldFailButCircuitBroken,
+				[5] = ShouldPassButCircuitBroken,
+				[6] = ShouldPass,
+			});
+		}
+
+		[Fact]
+		public void When_the_cb_trips_and_doesnt_timeout_before_the_next_error()
+		{
+			Execute(new Dictionary<int, Action>
+			{
+				[0] = ShouldFail,
+				[3] = ShouldPassButCircuitBroken,
+				[4] = ShouldFailButCircuitBroken,
+				[5] = ShouldPassButCircuitBroken,
+				[6] = ShouldFail,
+				[7] = ShouldPassButCircuitBroken,
+			});
+		}
+
+		private void Execute(Dictionary<int, Action> timeline)
+		{
+			foreach (var pair in timeline.OrderBy(p => p.Key))
+			{
+				_timestamp = InitialStamp.AddSeconds(pair.Key);
+				pair.Value();
+			}
+		}
+
+		private void ShouldPass()
+		{
 			_result = "";
-
+			_succeeds = true;
 			_promise();
-
 			_result.ShouldBe("PASS");
 		}
 
-		private void SuccessfulCallCircuitException(int offset)
+		private void ShouldFail()
 		{
-			Next(offset);
-
-			_succeeds = true;
 			_result = "";
-
-			Should.Throw<CircuitOpenException>(() => _promise());
-			_result.ShouldBe("");
-		}
-
-		private void FailingCallException(int offset)
-		{
-			Next(offset);
-
 			_succeeds = false;
-			_result = "";
-
 			Should.Throw<ArgumentException>(() => _promise());
 			_result.ShouldBe("FAIL");
 		}
 
-		private void FailingCallCircuitException(int offset)
+		private void ShouldPassButCircuitBroken()
 		{
-			Next(offset);
-
-			_succeeds = false;
 			_result = "";
-
+			_succeeds = true;
 			Should.Throw<CircuitOpenException>(() => _promise());
 			_result.ShouldBe("");
 		}
 
-		[Fact]
-		public void Invoke()
+		private void ShouldFailButCircuitBroken()
 		{
-			SuccessfulCall(0);
-			FailingCallException(1);
-			FailingCallCircuitException(2);
-
-			FailingCallException(7);
-			SuccessfulCallCircuitException(8);
+			_result = "";
+			_succeeds = false;
+			Should.Throw<CircuitOpenException>(() => _promise());
+			_result.ShouldBe("");
 		}
 	}
 }
