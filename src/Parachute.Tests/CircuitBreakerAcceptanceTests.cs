@@ -15,8 +15,11 @@ namespace Parachute.Tests
 		private string _result;
 		private Action _promise;
 
+		private readonly List<Type> _filter;
+
 		public CircuitBreakerAcceptanceTests()
 		{
+			_filter = new List<Type>();
 			_succeeds = true;
 			_timestamp = InitialStamp;
 
@@ -30,7 +33,8 @@ namespace Parachute.Tests
 			{
 				GetTimestamp = () => _timestamp,
 				ExceptionThreashold = 1,
-				ExceptionTimeout = TimeSpan.FromSeconds(5)
+				ExceptionTimeout = TimeSpan.FromSeconds(5),
+				IgnoreExceptions = _filter
 			});
 		}
 
@@ -79,6 +83,18 @@ namespace Parachute.Tests
 				[5] = ShouldPassButCircuitBroken,
 				[6] = ShouldFail,
 				[7] = ShouldPassButCircuitBroken,
+			});
+		}
+
+		[Fact]
+		public void When_exceptions_are_filtered_out()
+		{
+			_filter.Add(typeof(ArgumentException));
+
+			Execute(new Dictionary<int, Action>
+			{
+				[0] = ShouldFail,
+				[1] = ShouldFail,
 			});
 		}
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Parachute
 {
@@ -13,6 +14,7 @@ namespace Parachute
 		/// <summary>The amount of time after tripping before attempting to reset the breaker</summary>
 		public TimeSpan ResetTimeout { get; set; }
 		public Func<DateTime> GetTimestamp { get; set; }
+		public IEnumerable<Type> IgnoreExceptions { get; set; }
 
 		public CircuitBreakerConfig()
 		{

@@ -34,15 +34,18 @@ namespace Parachute
 					if (state.IsPartial)
 						state.Reset();
 				}
-				catch (Exception)
+				catch (Exception ex)
 				{
-					errorStamps.Add(now);
+					if (config.IgnoreExceptions.Contains(ex.GetType()) == false)
+					{
+						errorStamps.Add(now);
 
-					var threasholdStamp = now.Subtract(config.ExceptionTimeout);
-					var errorsInWindow = errorStamps.Count(stamp => stamp > threasholdStamp);
+						var threasholdStamp = now.Subtract(config.ExceptionTimeout);
+						var errorsInWindow = errorStamps.Count(stamp => stamp > threasholdStamp);
 
-					if (errorsInWindow >= config.ExceptionThreashold || state.IsPartial)
-						state.Trip();
+						if (errorsInWindow >= config.ExceptionThreashold || state.IsPartial)
+							state.Trip();
+					}
 
 					throw;
 				}
