@@ -1,6 +1,6 @@
 version: '{build}'
 build_script:
-- ./build.sh Release
+- sh build.sh Release
 test: off
 artifacts:
 - path: build\deploy\*.nupkg
