@@ -7,8 +7,24 @@ namespace Parachute
 {
 	public class CircuitBreaker
 	{
-		[Pure]
 		public static Action Create(Action action, CircuitBreakerConfig config)
+		{
+			Func<bool> wrapped = () =>
+			{
+				action();
+				return true;
+			};
+
+			var promise = Create(wrapped, config);
+
+			return () =>
+			{
+				promise();
+			};
+		}
+
+		[Pure]
+		public static Func<T> Create<T>(Func<T> action, CircuitBreakerConfig config)
 		{
 			var state = new CircuitBreakerState();
 			var errorStamps = new List<DateTime>();
@@ -26,13 +42,15 @@ namespace Parachute
 
 				try
 				{
-					action();
+					var result = action();
 
 					if (state.IsClosed)
 						errorStamps.Clear();
 
 					if (state.IsPartial)
 						state.Reset();
+
+					return result;
 				}
 				catch (Exception ex)
 				{
