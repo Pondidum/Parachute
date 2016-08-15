@@ -7,6 +7,19 @@ namespace Parachute
 {
 	public class CircuitBreaker
 	{
+		public static Action Create(Action action, Action<CircuitBreakerConfig> configure)
+		{
+			var config = new CircuitBreakerConfig();
+			configure(config);
+
+			return Create(action, config);
+		}
+
+		public static Action Create(Action action, Func<CircuitBreakerConfig> configure)
+		{
+			return Create(action, configure());
+		}
+
 		public static Action Create(Action action, CircuitBreakerConfig config)
 		{
 			Func<bool> wrapped = () =>
@@ -21,6 +34,19 @@ namespace Parachute
 			{
 				promise();
 			};
+		}
+
+		public static Func<T> Create<T>(Func<T> action, Action<CircuitBreakerConfig> configure)
+		{
+			var config = new CircuitBreakerConfig();
+			configure(config);
+
+			return Create(action, config);
+		}
+
+		public static Func<T> Create<T>(Func<T> action, Func<CircuitBreakerConfig> configure)
+		{
+			return Create(action, configure());
 		}
 
 		[Pure]
