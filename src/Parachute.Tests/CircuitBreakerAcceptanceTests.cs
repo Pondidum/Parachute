@@ -41,49 +41,37 @@ namespace Parachute.Tests
 		[Fact]
 		public void Invoke()
 		{
-			Execute(new Dictionary<int, Action>
-			{
-				[0] = ShouldPass,
-				[1] = ShouldFail,
-				[2] = ShouldFailButCircuitBroken,
-				[7] = ShouldFail,
-				[8] = ShouldPassButCircuitBroken
-			});
+			At(0, ShouldPass);
+			At(1, ShouldFail);
+			At(2, ShouldFailButCircuitBroken);
+			At(7, ShouldFail);
+			At(8, ShouldPassButCircuitBroken);
 		}
 
 		[Fact]
 		public void When_a_call_succeeds()
 		{
-			Execute(new Dictionary<int, Action>
-			{
-				[0] = ShouldPass
-			});
+			At(0, ShouldPass);
 		}
 
 		[Fact]
 		public void When_the_cb_trips_timesout_and_then_succeeds()
 		{
-			Execute(new Dictionary<int, Action>
-			{
-				[0] = ShouldFail,
-				[1] = ShouldFailButCircuitBroken,
-				[5] = ShouldPassButCircuitBroken,
-				[6] = ShouldPass,
-			});
+			At(0, ShouldFail);
+			At(1, ShouldFailButCircuitBroken);
+			At(5, ShouldPassButCircuitBroken);
+			At(6, ShouldPass);
 		}
 
 		[Fact]
 		public void When_the_cb_trips_and_doesnt_timeout_before_the_next_error()
 		{
-			Execute(new Dictionary<int, Action>
-			{
-				[0] = ShouldFail,
-				[3] = ShouldPassButCircuitBroken,
-				[4] = ShouldFailButCircuitBroken,
-				[5] = ShouldPassButCircuitBroken,
-				[6] = ShouldFail,
-				[7] = ShouldPassButCircuitBroken,
-			});
+			At(0, ShouldFail);
+			At(3, ShouldPassButCircuitBroken);
+			At(4, ShouldFailButCircuitBroken);
+			At(5, ShouldPassButCircuitBroken);
+			At(6, ShouldFail);
+			At(7, ShouldPassButCircuitBroken);
 		}
 
 		[Fact]
@@ -91,20 +79,14 @@ namespace Parachute.Tests
 		{
 			_filter.Add(typeof(ArgumentException));
 
-			Execute(new Dictionary<int, Action>
-			{
-				[0] = ShouldFail,
-				[1] = ShouldFail,
-			});
+			At(0, ShouldFail);
+			At(1, ShouldFail);
 		}
 
-		private void Execute(Dictionary<int, Action> timeline)
+		private void At(int offset, Action action)
 		{
-			foreach (var pair in timeline.OrderBy(p => p.Key))
-			{
-				_timestamp = InitialStamp.AddSeconds(pair.Key);
-				pair.Value();
-			}
+			_timestamp = InitialStamp.AddSeconds(offset);
+			action();
 		}
 
 		private void ShouldPass()
